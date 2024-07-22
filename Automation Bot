@@ -1,0 +1,1039 @@
+import io
+import os
+import re
+import pandas as pd
+from unidecode import unidecode
+from collections import defaultdict
+from decimal import Decimal
+from pdf2image import convert_from_path
+import pandas as pd
+import pytesseract
+from PIL import Image
+
+
+input_path = '''aqui va el directorio de entrada que el usuario ha seleccionado'''
+
+poppler_path = r'c:/Users/U1321540/OneDrive - MMC/Documents/poppler-24.02.0/Library/Bin'
+
+# Specify the path to the Tesseract OCR executable
+tesseract_path = r'c:/Users/U1321540/OneDrive - MMC/Desktop/Tesseract-OCR/tesseract.exe'
+
+# Set the path of the Tesseract OCR executable
+pytesseract.pytesseract.tesseract_cmd = tesseract_path
+
+texts = []
+filename_list = []
+number_client = []
+
+def convert_pdf_to_images(pdf_path):
+    # Convert PDF to a list of PIL Image objects
+    images = convert_from_path(pdf_path, poppler_path=poppler_path)
+    return images
+
+def preprocess_text(text):
+    text = re.sub(r'\n', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    text = text.lower()
+    text = text.replace('sasnit', 'sas nit')
+    text = text.replace(":",'')
+    text = text.replace(". . .",'*')
+    text = text.replace('razon social y/o nombres y apellidos direccion ciudad telefono','')
+    return text
+
+def remove_accents(text):
+    text = unidecode(text)
+    return text
+
+for root, dirs, files in os.walk(input_path):
+    for filename in files:
+        if filename.endswith('.pdf'):
+            pdf_path = os.path.join(root, filename)
+            
+            # Convert PDF to images
+            images = convert_pdf_to_images(pdf_path)
+            
+            text = ''
+            filename_list.append(filename)
+            
+            for image in images:
+                # Extract text from each image using Tesseract OCR
+                extracted_text = pytesseract.image_to_string(image, lang='eng')
+                text += extracted_text
+        
+            # Preprocess and clean the extracted text
+            text = preprocess_text(text)
+            text = remove_accents(text)
+            
+            texts.append(text)
+            number_client.append(os.path.basename(root))
+
+datav2 = { 'filename': filename_list, 'contenido': texts, 'number_client': number_client }
+textos = pd.DataFrame(datav2)
+
+
+content = []
+tipo_registro = []  # consecutivo
+producto = []
+tipo_id_contratante = []  # siempre es NIT
+id_contratante = []
+numero_poliza = []
+tipo_id_afianzado = []  # siempre es NIT
+id_afianzado = []
+nombre_afianzado = []
+tipo_persona = []  # siempre es JU
+correo_electronico = []  # siempre en blanco
+tipo_id_asegurado = []  # siempre es NIT
+id_asegurado = []
+nombre_asegurado = []
+id_tomador = []
+nombre_tomador = []
+id_beneficiario = []
+nombre_beneficiario = []
+campo1 = []  # siempre vacio
+campo2 = []  # siempre vacio
+campo3 = []  # siempre vacio
+sector = []  # siempre P
+tipo_contrato = []
+clase_contrato = []
+numero_contrato = []
+inicio_contrato = []  # siempre vacio
+fin_contrato = []  # siempre vacio
+moneda = []
+valor_contrato_local = []
+valor_contrato_usd = []
+renovable = []  # siempre N
+objeto = []
+prima = []
+gastos_expedicion = []  # siempre 0
+comision_porcentaje = []  # siempre 0
+participacion_delima = []
+fecha_expedicion = []
+consecutivo = []  # consecutivo
+trm = []
+pol_id = []  # siempre vacio
+modificacion = []
+anexo = []  # siempre 0
+fecha_modificacion = []
+compania = []
+archivonombre = []
+number_client = []
+
+data = defaultdict(list)
+
+
+
+
+columna_1 = [] #siempre 2
+consecutivo2= [] #mismo consecutivo
+codigo_cobertura = [] #se asocia con otra hoja
+porcentaje = [] # se deja en 0
+valor_cobertura = []
+inicio = []
+final = []
+siempre = [] #siempre F
+siempre_1 = [] # siempre 0
+prima_neta = []
+cobertura_name = []
+
+
+conditions = [
+    "basico responsabilidad civil",
+    "predios labores y operaciones",
+    "contratistas independientes",
+    "responsabilidad civil patronal",
+    "productos y operaciones terminadas",
+    "vehiculos propios y no propios",
+    "predios en arrendamiento",
+    "injuria",
+    "restaurantes y cafeterías",
+    "vallas - avisos",
+    "gastos medicos",
+    "responsabilidad civil cruzada",
+    "campos deportivos",
+    "transporte de mercancias azarosas",
+    "parqueaderos",
+    "responsabilidad civil personal",
+    "bienes bajo tenencia cuidado y control",
+    "vehiculos no propios",
+    "responsabilidad civil contractual",
+    "personal de escolta",
+    "propietarios - arrendatarios -poseedores",
+    "responsabilidad civil contaminacion",
+    "hoyo en uno",
+    "amparo de riesgos especiales",
+    "r.civil profesional (errores y omisiones)",
+    "responsabilidad civil profesional medica",
+    "asistencia en proceso penal",
+    "responsabilidad civil mascotas",
+    "asistencia mascota",
+    "asistencia exequial",
+    "asistencia estetica",
+    "asistencia legal y de ayuda",
+    "muerte de los pasajeros",
+    "incapacidad permanente",
+    "incapacidad temporal",
+    "gtos medicos,quirurg,farmaceut y hospit",
+    "gastos funerarios por acci. de transito",
+    "amparo de proteccion patrimonial",
+    "amparo de gastos juridicos",
+    "muerte accidental",
+    "r. civil extracontractual",
+    "daños a bienes a terceros",
+    "muerte/lesiones a una persona",
+    "muerte/lesiones a dos o más personas",
+    "contratistas y subcontratistas",
+    "resp. contractual por muerte accidental",
+    "resp. contractual por incap. permanente",
+    "resp. contractual por incapacidad temp.",
+    "resp. contractual por gtos medicos q-f-h",
+    "resp. contractual asistencia juridica pp",
+    "resp. contractual amparo patrimonial"
+]
+
+cumplimiento_cob = [ 
+    "seriedad de la oferta",
+    "cumplimiento del contrato",
+    "buen manejo y correcta inversion del anticipo",
+    "estabilidad y buen funcionamiento",
+    "estabilidad de obra",
+    "salarios y prestaciones sociales",
+    "disposiciones legales",
+    "clausula penal pecuniaria",
+    "judiciales",
+    "manejo de materiales - provision de repuestos y accesorios",
+    "calidad del suministro",
+    "calidad y correcto funcionamiento de los bienes y equipos suministrados",
+    "calidad del servicio",
+    "suministro de repuestos",
+    "pago anticipado",
+    "canon de arrendamiento",
+    "iva sobre canon de arrendamiento",
+    "cuotas de administracion",
+    "cobertura de daños",
+    'pago de salarios, prestaciones sociales e indemnizaciones laborales']
+
+# Read the CSV file into a DataFrame
+
+contador= 0
+
+#tabla 1
+for index, row in textos.iterrows():
+    text = str(row['contenido'])
+    text = text.replace("$.a.s","sas")
+    text = text.replace("s.a.s.","sas")
+    text = text.replace("nro.",'nro')
+    text = text.replace ('no.', 'nro')
+    text = text.replace(')','')
+    text = text.replace("wasta","hasta")
+    text = text.replace("_",'')
+    text = text.replace("| ",'')
+    text = text.replace("prima va total a pagar ",'')
+    text = text.replace("}",'')
+    text = text.replace("yY=","y")
+    text = text.replace(" .",".")
+    text = text.replace("*", '')
+    text = text.replace(" ,00", ',00')
+    text = text.replace('desde has','desde hasta')
+    text = text.replace('desde ha','desde hasta') #desde hastastata
+    text = text.replace('desde hastastata','desde hasta')
+    text = text.replace('desde hastasta','desde hasta')
+    text = text.replace('ha desde','desde hasta')
+    text = text.replace('objeto.','objeto')
+    text= text.replace('documento protegido','.documento protegido')
+    text = text.replace('contrato n.','contrato nro ')
+    text = text.replace('(pmrc','(pmrc)')
+    text = text.replace('pmrc','(pmrc)')
+    text = text.replace('pmrc)','(pmrc)')
+    text = text.replace('{razon social ','')
+    text = re.sub(r'objeto', r'objeto ', text, flags=re.IGNORECASE)
+    text = re.sub(r'nit', r' nit ', text, flags=re.IGNORECASE)
+    put_nit = r"(?<!nit\s)(\d{3}\.?\d{3}\.?\d{3}-?\d{1})"
+
+    pattern_putnit = re.findall(put_nit, text)
+    for match in pattern_putnit:
+        if not re.search(r"nit\s", match):
+            match_with_nit = "nit " + match
+            text = text.replace(match, match_with_nit)
+
+ 
+    filename = row['filename']
+    #text = text.replace("")
+    if 'suramericana' in text:
+        content.append(text)
+        contador = contador + 1
+        
+        tipo_registro.append(1)
+        #responsabilidad civil
+        if 'responsabilidad civil' in text:
+            producto.append(20)            
+            
+            nombre_cont = re.search(r"programa de mitigacion de riesgos en la contratacion \(pmrc\) de (.*?) nit", text)
+            if nombre_cont:
+                nombre_contratista = nombre_cont.group(1)
+                nombre_asegurado.append(nombre_contratista)
+                nombre_tomador.append(nombre_contratista)
+                nombre_beneficiario.append(nombre_contratista)
+            else:
+             nombre_cont2 = re.search(r'programa de mitigacion de riesgos en la contratacion de (.*?) nit',text)
+             if nombre_cont2:
+                nombre_contratista1= nombre_cont2.group(1)
+                nombre_asegurado.append(nombre_contratista1)
+                nombre_tomador.append(nombre_contratista1)
+                nombre_beneficiario.append(nombre_contratista1)
+             else:
+                nombre_asegurado.append('')
+                nombre_tomador.append('')
+                nombre_beneficiario.append('')                 
+            
+            id_cont = re.search(r"programa de mitigacion de riesgos en la contratacion \(pmrc\) de.?([89]\d+[\.\-\d])", text)
+            if id_cont:
+                id_contrat= id_cont.group(1)
+                id_contratante.append(id_contrat)
+                id_beneficiario.append(id_contrat)
+                id_tomador.append(id_contrat)
+                id_asegurado.append(id_contrat)
+            else:
+                id_value = re.search(r"programa de mitigacion de riesgos en la contratacion de.?([89]\d+[\.\-\d])", text)   
+                if id_value:
+                    id_value_group = id_value.group(1)
+                    id_contratante.append(id_value_group)
+                    id_beneficiario.append(id_value_group)
+                    id_tomador.append(id_value_group)
+                    id_asegurado.append(id_value_group)
+                else:
+                    id_contratante.append('')
+                    id_beneficiario.append('')
+                    id_tomador.append('')
+                    id_asegurado.append('')            
+
+            tipo_id_contratante.append('N')
+            n_poli = re.search(r"\b(\d{7}-\d)\b", text)
+            if n_poli:
+                numero = n_poli.group()
+                numero_poliza.append(numero)
+            else:
+                n_poli2= re.search(r'\b(\d{6}-\d)\b',text)
+                numero = n_poli2.group()
+                numero_poliza.append(numero)
+
+            tipo_id_afianzado.append('N')
+
+            id_afian = re.search(r'se aclara que el pagador de la presente poliza es el afianzado.?([89]\d+[\.\-\d])', text)
+            if id_afian:
+                id_aseg_val = id_afian.group(1)
+                id_afianzado.append(id_aseg_val)
+            else:
+                id_afian2 = re.search(r'se aclara que el pagador de la presente poliza es el contratista.?([89]\d+[\.\-\d])', text)
+                if id_afian2:
+                    afianzado_val = id_afian2.group(1)
+                    id_afianzado.append(afianzado_val)
+                else:
+                    id_afianzado.append("") 
+
+            nombre_afian = re.search(r"pagador de la presente poliza es el contratista (.*?) nit", text)
+            if nombre_afian:
+                nombre_aseg_value = nombre_afian.group(1)
+                nombre_afianzado.append(nombre_aseg_value)
+            else:
+                afianzado_pattern = re.search(r'pagador de la presente poliza es el afianzado (.*?) nit',text)
+                if afianzado_pattern:
+                    afianzado_name = afianzado_pattern.group(1)
+                    nombre_afianzado.append(afianzado_name)  
+                else:
+                    afianzado_pattern = re.search(r'se aclara que el afianzado \/ contratista es (\w+ \w+)',text)
+                    if afianzado_pattern:
+                        afianzado_name = afianzado_pattern.group(1) 
+                        nombre_afianzado.append(afianzado_name)
+                    else:
+                        nombre_afianzado.append('')
+
+            tipo_persona.append('JU')
+            tipo_id_asegurado.append('N')
+            sector.append('P')
+            
+            if 'seriedad de la oferta' in text:
+                tipo_contrato.append(1001)
+            else:
+                tipo_contrato.append(1000)
+
+            if 'arrendamiento' in text:
+                clase_contrato.append('A')
+            elif 'construccion' in text:
+                clase_contrato.append('C')
+            elif 'gas natural' in text:
+                clase_contrato.append('GN')
+            elif 'prestacion de servicios' in text:
+                clase_contrato.append('PS')
+            elif 'bienes' in text:
+                clase_contrato.append('SB')
+            else:
+                clase_contrato.append("O")
+
+            num_contrato = re.search(r"(\d+)\. nro de contrato", text)
+            if num_contrato:
+                value_contrato = num_contrato.group(1)
+                numero_contrato.append(value_contrato)
+            else:
+                num_contrato = re.search(r"de contrato (\d+)|contrato nro (\d+)", text)
+                if num_contrato:
+                    value_contrato = num_contrato.group(1) or num_contrato.group(2)
+                    numero_contrato.append(value_contrato)
+                else:
+                     num_contrato = re.search(r"originados en virtud de la ejecucion del contrato (\d+)", text)
+                     if num_contrato:
+                         value_contrato = num_contrato.group(1)
+                         numero_contrato.append(value_contrato)
+                     else:
+                         num_contrato = re.search(r"contrato (\d+)", text) 
+                         if num_contrato:
+                             value_contrato = num_contrato.group(1)
+                             numero_contrato.append(value_contrato)
+                         else:
+                             num_contrato = re.search(r"contrato nro (\d+ \- \d+)", text)
+                             if num_contrato:
+                                 value_contrato = num_contrato.group(1)
+                                 numero_contrato.append(value_contrato)
+                             else:
+                                 numero_contrato.append("")
+
+            currency = re.search(r'dolares',text)
+            if currency:
+                moneda.append('USD')
+            else:
+                moneda.append('COP')
+            
+            contract_value = re.search(r"cobertura de (\d[\d,]*)", text)
+            if contract_value:
+                 result_contract = contract_value.group(1)
+                 valor_contrato_local.append(result_contract)                 
+                 valor_contrato_usd.append(result_contract)
+            else:
+                cobertura_pattern = re.search(r'(?<=\d{2}-[a-zA-Z]{3}-\d{4}\s)\d+(?:\.\d+)*(?=,)', text)
+                if cobertura_pattern:
+                   cobertura_value = cobertura_pattern.group()
+                   valor_contrato_local.append(cobertura_value)
+                   valor_contrato_usd.append(cobertura_value)
+                           
+                else:
+                   value_pattern = r"total valor asegurado.?\$.?\$.*?\$([\d.,]+)"
+                   value_match = re.search(value_pattern, text)
+                   if value_match:
+                      value = value_match.group(1)
+                      value = value.replace(".", "")  # Remove the decimal separator "."
+                      valor_contrato_local.append(value)
+                      valor_contrato_usd.append(value)
+                                                                                        
+
+            renovable.append('N')
+
+            object = re.search(r"objeto (.*?)\.", text)
+            if object:
+                object_value = object.group(1)
+                objeto.append(object_value)
+            else:
+                match_object = re.search(r'suministro de.*?\.', text)
+
+                if match_object:
+                  extracted_text_object = match_object.group()
+                  extracted_text_object = extracted_text_object.strip()    
+                  objeto.append(extracted_text_object)
+                else:
+                    objeto.append("")
+
+            prima_s = re.search(r"\$([\d.,]+)", text)
+            if prima_s:
+                prima_value = prima_s.group(1)
+                prima.append(prima_value)
+            else:
+                prima.append('')
+
+            gastos_expedicion.append(0)
+            comision_porcentaje.append(0)
+
+            participacion = r"corredores (\d{2,3})"
+            
+            participacion_match = re.search(participacion, text)
+            if participacion_match:
+                participacion_value = participacion_match.group(1)
+                participacion_delima.append(participacion_value)
+            else:
+                participacion_delima.append('')
+
+            fecha_exp = re.search(r"(\d{1,2} de [a-zA-Z]+ de \d{4})", text)
+            if fecha_exp:
+                expedicion = fecha_exp.group(1)
+                fecha_expedicion.append(expedicion)
+            else:
+                fecha_expedicion.append('')
+
+            consecutivo.append(contador)
+            if 'poliza nueva' in text:
+                modificacion.append("N")
+                fecha_modificacion.append('')
+            else:
+                modificacion.append("S")
+                fecha_modificacion.append(expedicion)
+
+            anexo_pattern = re.search('\b(\d+)\s+tomador\b',text)
+            if anexo_pattern:
+                anexo_value = anexo_pattern.group(1)
+                anexo.append(anexo_value)
+            else:
+                anexo.append('')
+            
+            correo_electronico.append('')
+            
+            compania.append('Suramericana')
+            
+            pattern = r"trm.*?\$([\d.,]+)"
+            match = re.search(pattern, text)
+
+            if match:
+                trm_value = match.group(1)
+                #trm_value = trm_value.replace(".", "").replace(",", ".")
+                trm.append(trm_value)
+            else:
+                trm.append('')
+            
+            pol_id.append('')
+            campo1.append('')
+            campo2.append('')
+            campo3.append('')
+            inicio_contrato.append('')
+            fin_contrato.append('')
+            number_client.append(row['number_client'])     
+            archivonombre.append(filename)
+            for condition in conditions:
+            
+                if condition in text:
+                    cobertura_name.append(condition)
+                    cobertura_name.append
+                    cobertura = fr'{condition}\s+(\d+(?:\.\d+)?)'
+                    patron_loop = re.search(cobertura, text, re.IGNORECASE)
+                    prima_pattern = re.search(condition + r'(?:\s+\S+){2}\s+(\S+)', text)
+                    inicio_pattern = re.search(r'desde hasta (\d{2}-[a-zA-Z]{3}-\d{4})', text)
+                    inicio_pattern_alt = re.search(r'desde hasta.*?(\d{2}-[a-zA-Z]{3}-\d{4})', text)
+                    fin_pattern = re.search(r'desde hasta \d{2}-[a-zA-Z]{3}-\d{4} (\d{2}-[a-zA-Z]{3}-\d{4})', text) 
+                    consecutivo2.append(contador)
+                    columna_1.append(2)
+                    porcentaje.append(10)
+                    siempre.append('')
+                    siempre_1.append('')
+                    codigo_cobertura.append('')
+                    
+                    if patron_loop: 
+                        cobertura_val = patron_loop.group(1)
+                        valor_cobertura.append(cobertura_val)
+                    else:
+                        valor_cobertura.append("")
+                    
+                    if prima_pattern:
+                        prima_val = prima_pattern.group(1)
+                        prima_neta.append(prima_val)
+                    else:
+                        prima_neta.append('')
+
+                    if inicio_pattern:
+                        inicio_val = inicio_pattern.group(1)
+                        inicio.append(inicio_val)
+                    elif inicio_pattern_alt:
+                        inicio_val = inicio_pattern_alt.group(1)
+                        inicio.append(inicio_val)
+                    else:
+                        inicio.append('')
+
+                    if fin_pattern:
+                        fin_val = fin_pattern.group(1)
+                        final.append(fin_val)
+                    else:
+                        final.append('')       
+                 
+
+        #Cumplimiento
+        else:
+            text = text.replace("]", "")
+            text = text.replace("|", "")            
+            producto.append(7)          
+            number_client.append(row['number_client'])  
+
+            nombre_cont = re.search(r"(?<=\b[89]\d{9}\s).*?(?=\scoberturas)", text)
+            if nombre_cont:
+                nombre_contratista_pre = nombre_cont.group()
+                nombre_cont_v2 = re.search(r'\b[89]\d{9}\b\s(.*)',nombre_contratista_pre)
+                if nombre_cont_v2:
+                    nombre_contratista = nombre_cont_v2.group(1)
+                    nombre_asegurado.append(nombre_contratista)
+                    nombre_tomador.append(nombre_contratista)
+                    nombre_beneficiario.append(nombre_contratista)
+                else:
+                        nombre_asegurado.append(nombre_contratista_pre)
+                        nombre_tomador.append(nombre_contratista_pre)
+                        nombre_beneficiario.append(nombre_contratista_pre) 
+
+            else:
+                match_contratista = re.search(r"programa de mitigacion de riesgos en la contratacion \(pmrc\) de (.*?) nit", text, re.DOTALL)
+                if match_contratista:
+                        extracted_text = match_contratista.group(1)                        
+                        nombre_asegurado.append(extracted_text)
+                        nombre_tomador.append(extracted_text)
+                        nombre_beneficiario.append(extracted_text)
+                else:
+                    match_contratista2 = re.search(r"programa de mitigacion de riesgos en la contratacion \(pmrc\) de (.*?) nit", text, re.DOTALL)
+                    if match_contratista2:
+                        extracted_text = match_contratista2.group(1)
+                        nombre_asegurado.append(extracted_text)
+                        nombre_tomador.append(extracted_text)
+                        nombre_beneficiario.append(extracted_text)                        
+                    else:
+                        nombre_asegurado.append('')
+                        nombre_tomador.append('')
+                        nombre_beneficiario.append('')                    
+            
+            id_cont = re.search(r"asegurado.?([89]\d+[\.\-\d])", text)
+                                      
+            if id_cont:
+                id_value_group = id_cont.group(1)
+                id_contratante.append(id_value_group)
+                id_beneficiario.append(id_value_group)
+                id_tomador.append(id_value_group)
+                id_asegurado.append(id_value_group)
+
+            else:
+                pattern_nit = r'programa de mitigacion de riesgos en la contratacion de.?([89]\d+[\.\-\d])'
+                match_nit = re.search(pattern_nit,text)
+                if match_nit:
+                    nit_value = match_nit.group(1)
+                    id_contratante.append(nit_value)
+                    id_beneficiario.append(nit_value)
+                    id_tomador.append(nit_value)
+                    id_asegurado.append(nit_value)   
+                else:
+                    id_contratante.append("")
+                    id_beneficiario.append("")
+                    id_tomador.append("")
+                    id_asegurado.append("")                                   
+
+            tipo_id_contratante.append('N')
+            n_poli = re.search(r"\b(\d{7}-\d)\b", text)
+            if n_poli:
+                numero = n_poli.group()
+                numero_poliza.append(numero)
+            else:
+                n_poli2= re.search(r'\b(\d{6}-\d)\b',text)
+                numero = n_poli2.group()
+                numero_poliza.append(numero)
+
+            tipo_id_afianzado.append('N')
+
+            id_afian = re.search(r"garantizado.?([89]\d+[\.\-\d])", text)
+            if id_afian:
+                id_aseg_val = id_afian.group(1)
+                id_afianzado.append(id_aseg_val)
+            else:
+                id_afian2 = re.search(r"pagador de la presente poliza es el contratista.?([89]\d+[\.\-\d])", text)
+                if id_afian2:
+                    id_aseg_val = id_afian2.group(1)
+                    id_afianzado.append(id_aseg_val)
+                else:
+                    id_afianzado.append('')
+
+            nombre_afianz = re.search(r"(?<=\b[89]\d{9}\s).*?(?=\sbeneficiario)", text)
+            if nombre_afianz:
+                nombre_value= nombre_afianz.group()
+                nombre_afianzado.append(nombre_value)
+            else:
+                nombre_afianz = re.search(r"pagador de la presente poliza es el tomador (.*?) nit", text)
+                if nombre_afianz:
+                    nombre_value = nombre_afianz.group(1)
+                    nombre_afianzado.append(nombre_value)  
+                else:
+                    afianzado_pattern = re.search(r'se aclara que el afianzado \/ contratista es (\w+ \w+)',text)
+                    if afianzado_pattern:
+                        afianzado_name = afianzado_pattern.group(1) 
+                        nombre_afianzado.append(afianzado_name)
+                    else:
+                        nombre_afianzado.append('')           
+
+            tipo_persona.append('JU')
+            tipo_id_asegurado.append('N')
+            sector.append('P')
+            if 'seriedad de la oferta' in text:
+                tipo_contrato.append(1001)
+            else:
+                tipo_contrato.append(1000)
+
+            if 'arrendamiento' in text:
+                clase_contrato.append('A')
+            elif 'construccion' in text:
+                clase_contrato.append('C')
+            elif 'gas natural' in text:
+                clase_contrato.append('GN')
+            elif 'prestacion de servicios' in text:
+                clase_contrato.append('PS')
+            elif 'bienes' in text:
+                clase_contrato.append('SB')
+            else:
+                clase_contrato.append("O")
+            num_contrato = re.search(r"(\d+)\. nro de contrato", text)
+            if num_contrato:
+                value_contrato = num_contrato.group(1)
+                numero_contrato.append(value_contrato)
+            else:
+                num_contrato = re.search(r"de contrato (\d+)|contrato nro (\d+)", text)
+                if num_contrato:
+                    value_contrato = num_contrato.group(1) or num_contrato.group(2)
+                    numero_contrato.append(value_contrato)
+                else:
+                     num_contrato = re.search(r"originados en virtud de la ejecucion del contrato (\d+)", text)
+                     if num_contrato:
+                         value_contrato = num_contrato.group(1)
+                         numero_contrato.append(value_contrato)
+                     else:
+                         num_contrato = re.search(r"contrato (\d+)", text) 
+                         if num_contrato:
+                             value_contrato = num_contrato.group(1)
+                             numero_contrato.append(value_contrato)
+                         else:
+                             num_contrato = re.search(r"contrato nro (\d+ \- \d+)", text)
+                             if num_contrato:
+                                 value_contrato = num_contrato.group(1)
+                                 numero_contrato.append(value_contrato)
+                             else:
+                                 numero_contrato.append("")
+
+            currency = re.search(r'dolares',text)
+            if currency:
+                moneda.append('USD')
+            else:
+                moneda.append('COP')
+            
+            contract_value = re.search(r"cobertura de (\d[\d,]*)", text)
+            if contract_value:
+                 result_contract = contract_value.group(1)
+                 valor_contrato_local.append(result_contract)                 
+                 valor_contrato_usd.append(result_contract)
+            else:
+                cobertura_pattern = re.search(r'(?<=\d{2}-[a-zA-Z]{3}-\d{4}\s)\d+(?:\.\d+)*(?=,)', text)
+                if cobertura_pattern:
+                   cobertura_value = cobertura_pattern.group()
+                   valor_contrato_local.append(cobertura_value)
+                   valor_contrato_usd.append(cobertura_value)
+                        
+                else:
+                   valor_contrato_local.append("")
+                   valor_contrato_usd.append("")
+                         
+            renovable.append('N')
+
+            object = re.search(r"objeto (.*?)\.", text)
+            if object:
+                object_value = object.group(1)
+                objeto.append(object_value)
+            else:
+                match_object = re.search(r'suministro de.*?\.', text)
+
+                if match_object:
+                  extracted_text_object = match_object.group()
+                  extracted_text_object = extracted_text_object.strip()    
+                  objeto.append(extracted_text_object)
+                else:
+                    objeto.append("")
+
+            prima_s = re.search(r"\$([\d.,]+)", text)
+            if prima_s:
+                prima_value = prima_s.group(1)
+                prima.append(prima_value)
+            else:
+                prima.append('')
+
+            gastos_expedicion.append(0)
+            comision_porcentaje.append(0)
+
+            participacion = r"corredores (\d{2,3})"
+            participacion_match = re.search(participacion, text)
+            if participacion_match:
+                participacion_value = participacion_match.group(1)
+                participacion_delima.append(participacion_value)
+            else:
+                participacion_delima.append('')
+
+            fecha_exp = re.search(r"(\d{1,2} de [a-zA-Z]+ de \d{4})", text)
+            if fecha_exp:
+                expedicion = fecha_exp.group(1)
+                fecha_expedicion.append(expedicion)
+            else:
+                fecha_expedicion.append('')
+
+            consecutivo.append(contador)
+            
+
+            if 'poliza nueva' in text:
+                modificacion.append("N")
+                fecha_modificacion.append('')
+            else:
+                modificacion.append("S")
+                fecha_modificacion.append(expedicion)
+
+            anexo_pattern = re.search('(\d+)\s+intermediario',text)
+            if anexo_pattern:
+                anexo_value = anexo_pattern.group(1)
+                anexo.append(anexo_value)
+            else:
+                anexo.append('')
+                
+            correo_electronico.append('')
+            
+            compania.append('Suramericana')
+            
+            pattern = r"trm.*?\$([\d.,]+)"
+            match = re.search(pattern, text)            
+            if match:
+                trm_value = match.group(1)
+                #trm_value = trm_value.replace(".", "").replace(",", ".")
+                trm.append(trm_value)
+            else:
+                trm.append('')
+
+            pol_id.append('')
+            campo1.append('')
+            campo2.append('')
+            campo3.append('')
+            inicio_contrato.append('')
+            fin_contrato.append('')
+            archivonombre.append(filename)
+
+            for coberturas in cumplimiento_cob:
+            
+                if coberturas in text:
+                    cobertura_name.append(coberturas)
+                    cobertura = fr'{coberturas}\s+\d{{2}}-[a-z]{{3}}-\d{{4}}\s+\d{{2}}-[a-z]{{3}}-\d{{4}}\s+(\d{{1,3}}(?:\.\d{{3}})*,\d{{2}})'
+                    patron_loop = re.search(cobertura, text, re.IGNORECASE)
+                    prima_pattern = r'{}\s+\d{{2}}-\w{{3}}-\d{{4}} \d{{2}}-\w{{3}}-\d{{4}} \d{{1,3}}(?:\.\d{{3}}),\d{{2}} (\d{{1,3}}(?:\.\d{{3}}),\d{{2}})'.format(coberturas)
+                    inicio_pattern = re.search(fr'{coberturas}(\d{2}-\w{3}-\d{4}) \d{2}-\w{3}-\d{4} \d{1,3}(?:\.\d{3}),\d{2} \d{1,3}(?:\.\d{3}),\d{2}', text)
+                    inicio_pattern_alt = re.search(r'desde hasta.*?(\d{2}-[a-zA-Z]{3}-\d{4})', text)
+                    fin_pattern = re.search(fr'{coberturas}\s+\d{{2}}-[a-z]{{3}}-\d{{4}}\s+(\d{{2}}-[a-z]{{3}}-\d{{4}})\s+(\d{{1,3}}(?:\.\d{{3}})*,\d{{2}})', text) 
+                    consecutivo2.append(contador)
+                    columna_1.append(2)
+                    porcentaje.append(20)
+                    siempre.append('')
+                    siempre_1.append('')
+                    codigo_cobertura.append('')
+                    
+                    if patron_loop: 
+                        cobertura_val = patron_loop.group(1)
+                        valor_cobertura.append(cobertura_val)
+                    else:
+                        valor_cobertura.append("")
+                    
+                    valor_prima = re.search(prima_pattern,text,re.IGNORECASE)
+
+                    if valor_prima:
+                        prima_val = valor_prima.group(1)
+                        prima_neta.append(prima_val)
+                    else:
+                        prima_neta.append('')
+
+                    if inicio_pattern:
+                        inicio_val = inicio_pattern.group(1)
+                        inicio.append(inicio_val)
+                    elif inicio_pattern_alt:
+                        inicio_val = inicio_pattern_alt.group(1)
+                        inicio.append(inicio_val)
+                    else:
+                        inicio.append('')
+
+                    if fin_pattern:
+                        fin_val = fin_pattern.group(1)
+                        final.append(fin_val)
+                    else:
+                        final.append('')
+  
+          
+
+data = {
+        'tipo_registro': tipo_registro,
+        'producto': producto,
+        'tipo_id_contratante': tipo_id_contratante,
+        'id_contratante': id_contratante,
+        'numero_poliza': numero_poliza,
+        'tipo_id_afianzado': tipo_id_afianzado,
+        'id_afianzado': id_afianzado,
+        'nombre_afianzado': nombre_afianzado,
+        'tipo_persona': tipo_persona,
+        'correo_electronico': correo_electronico,
+        'tipo_id_asegurado': tipo_id_asegurado,
+        'id_asegurado': id_asegurado,
+        'nombre_asegurado': nombre_asegurado,
+        'id_tomador': id_tomador,
+        'nombre_tomador': nombre_tomador,
+        'id_beneficiario': id_beneficiario,
+        'nombre_beneficiario': nombre_beneficiario,
+        'campo1': campo1,
+        'campo2': campo2,
+        'campo3': campo3,
+        'sector': sector,
+        'tipo_contrato': tipo_contrato,
+        'clase_contrato': clase_contrato,
+        'numero_contrato': numero_contrato,
+        'inicio_contrato': inicio_contrato,
+        'fin_contrato': fin_contrato,
+        'moneda': moneda,
+        'valor_contrato_local': valor_contrato_local,
+        'valor_contrato_usd': valor_contrato_usd,
+        'renovable': renovable,
+        'objeto': objeto,
+        'prima': prima,
+        'gastos_expedicion': gastos_expedicion,
+        'comision_porcentaje': comision_porcentaje,
+        'participacion_delima': participacion_delima,
+        'fecha_expedicion': fecha_expedicion,
+        'consecutivo': consecutivo,
+        'trm': trm,
+        'pol_id': pol_id,
+        'modificacion': modificacion,
+        'anexo': anexo,
+        'fecha_modificacion': fecha_modificacion,
+        'compania': compania,
+        'archivonombre': archivonombre,
+        'texto' : content,
+        'number_client' : number_client
+    }
+
+df = pd.DataFrame(data)
+
+for index, row in df.iterrows():
+
+    df['id_contratante'] = df['id_contratante'].str.replace('.','')
+    df['id_contratante'] = df['id_contratante'].str.replace('-','')
+    df['id_afianzado'] = df['id_afianzado'].str.replace('.','')
+    df['id_afianzado'] = df['id_afianzado'].str.replace('-','')
+    df['id_asegurado'] = df['id_asegurado'].str.replace('.','')
+    df['id_asegurado'] = df['id_asegurado'].str.replace('-','')
+    df['id_tomador'] = df['id_tomador'].str.replace('.','')
+    df['id_tomador'] = df['id_tomador'].str.replace('-','')
+    df['id_beneficiario'] = df['id_beneficiario'].str.replace('.','')
+    df['id_beneficiario'] = df['id_beneficiario'].str.replace('-','')
+    df['numero_poliza'] = df['numero_poliza'].replace(r'-\d+', '', regex=True)
+    df['numero_poliza'] = df['numero_poliza'].astype(int)
+    df['nombre_asegurado'] = df['nombre_asegurado'].apply(lambda x: ' '.join(x.split()[:3]) if len(x.split()) > 5 else x)
+    df['nombre_beneficiario'] = df['nombre_beneficiario'].apply(lambda x: ' '.join(x.split()[:3]) if len(x.split()) > 5 else x)
+    df['nombre_tomador'] = df['nombre_tomador'].apply(lambda x: ' '.join(x.split()[:3]) if len(x.split()) > 5 else x)
+    df['nombre_afianzado'] = df['nombre_afianzado'].apply(lambda x: ' '.join(x.split()[:3]) if len(x.split()) > 5 else x)
+    df['prima'] = df['prima'].replace(',','')
+    df['prima'] = df['prima'].str.replace('.','')
+    df['valor_contrato_local'] = df['valor_contrato_local'].str.replace('.','')
+    df['valor_contrato_local'] = df['valor_contrato_local'].str.replace(',','')
+    df['valor_contrato_usd'] = df['valor_contrato_usd'].str.replace('.','')
+    df['trm'] = df['trm'].str.replace(',','.')
+    df['participacion_delima'] = pd.to_numeric(df['participacion_delima'], errors='coerce')
+    df.loc[df['participacion_delima'] == 700, 'participacion_delima'] = 70
+    
+    if row['moneda'] == 'COP':
+        df.loc[index, 'valor_contrato_usd'] = ''
+    else:
+        df.loc[index, 'valor_contrato_local'] = ''
+
+    if len(row['numero_contrato']) <= 2:
+        df.loc[index,'numero_contrato']=''
+
+
+second_data = { 
+    'columna_1' : columna_1,
+    'consecutivo2' : consecutivo2 ,
+    'codigo_cobertura' : codigo_cobertura,
+    'porcentaje' : porcentaje,
+    'valor_cobertura' : valor_cobertura,
+    'inicio' : inicio,
+    'final' : final,       
+    'siempre' : siempre,
+    'siempre1' : siempre_1,
+    'prima_neta': prima_neta,
+    'cobertura': cobertura_name 
+    }
+
+df2 = pd.DataFrame(second_data)
+
+code_mapping = {
+    'seriedad de la oferta': '00',
+    'cumplimiento del contrato': '01',
+    'buen manejo y correcta inversion del anticipo': '02',
+    'estabilidad y buen funcionamiento': '03',
+    'pago de salarios, prestaciones sociales e indemnizaciones laborales': '04',
+    'disposiciones legales': '05',
+    'clausula penal pecuniaria': '06',
+    'judiciales': '07',
+    'manejo de materiales - provision de repuestos y accesorios': '08',
+    'calidad del suministro': '09',
+    'calidad y correcto funcionamiento de los bienes y equipos suministrados': '11',
+    'calidad del servicio': '12',
+    'suministro de repuestos': '13',
+    'pago anticipado': '15',
+    'canon de arrendamiento': '16',
+    'iva sobre canon de arrendamiento': '17',
+    'servicios publicos': '18',
+    'cuotas de administracion': '19',
+    'cobertura de daños': '20',
+    'basico responsabilidad civil': '00',
+    'predios labores y operaciones': '01',
+    'contratistas independientes': '02',
+    'responsabilidad civil patronal': '03',
+    'productos y operaciones terminadas': '04',
+    'vehiculos propios y no propios': '05',
+    'predios en arrendamiento': '06',
+    'injuria': '07',
+    'restaurantes y cafeterías': '08',
+    'vallas - avisos': '09',
+    'gastos medicos': '11',
+    'responsabilidad civil cruzada': '12',
+    'campos deportivos': '13',
+    'transporte de mercancias azarosas': '14',
+    'parqueaderos': '15',
+    'responsabilidad civil personal': '16',
+    'bienes bajo tenencia cuidado y control': '17',
+    'vehiculos no propios': '18',
+    'responsabilidad civil contractual': '19',
+    'personal de escolta': '20',
+    'propietarios - arrendatarios -poseedores': '21',
+    'responsabilidad civil contaminacion': '22',
+    'hoyo en uno': '23',
+    'amparo de riesgos especiales': '25',
+    'r.civil profesional (errores y omisiones)': '26',
+    'responsabilidad civil profesional medica': '28',
+    'asistencia en proceso penal': '29',
+    'responsabilidad civil mascotas': '30',
+    'asistencia mascota': '30A',
+    'asistencia exequial': '30B',
+    'asistencia estetica': '30C',
+    'asistencia legal y de ayuda': '30D',
+    'muerte de los pasajeros': '40',
+    'incapacidad permanente': '42',
+    'incapacidad temporal': '44',
+    'gtos medicosquirurgfarmaceut y hospit': '46',
+    'gastos funerarios por acci. de transito': '48',
+    'amparo de proteccion patrimonial': '50',
+    'amparo de gastos juridicos': '52',
+    'muerte accidental': '58',
+    'r. civil extracontractual': '60',
+    'daños a bienes a terceros': '61',
+    'muerte/lesiones a una persona': '62',
+    'muerte/lesiones a dos o más personas': '63',
+    'contratistas y subcontratistas': '64',
+    'resp. contractual por muerte accidental': '80',
+    'resp. contractual por incap. permanente': '81',
+    'resp. contractual por incapacidad temp.': 'VA',
+    'resp. contractual por gtos medicos q-f-h': '83',
+    'resp. contractual asistencia juridica pp': '84',
+    'resp. contractual amparo patrimonial': '85'
+}
+
+
+# Add the codes based on the values in the 'nombre de cobertura' column
+df2['codigo_cobertura'] = df2['cobertura'].map(code_mapping)
+df['trm'] = df['trm'].str.replace('.','',1)
+
+
+
+
+# Save the dataframes in the selected output path
+df.to_csv(output_path + "/output1.csv", index=False)
+df2.to_csv(output_path + "/output2.csv", index=False)
